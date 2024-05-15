@@ -4,9 +4,9 @@ The T-shaped Maze Generator is a Tcl/Tk script designed to create a dynamic T-sh
 
 ## Features
 
-- **Dynamic Maze Generation**: Generates a T-shaped maze that becomes more complex with each level.
-- **Interactive Pointer**: Includes a movable pointer that responds to mouse movements but is confined within the maze boundaries.
-- **Customizable Levels**: Allows the expansion of the maze up to a specified number of levels through recursive function calls.
+- Generates a T-shaped maze that becomes more complex with each level.
+- Includes a movable pointer that responds to mouse movements but is confined within the maze boundaries.
+- Allows the expansion of the maze up to a specified number of levels through recursive function calls.
 
 ## How It Works
 
@@ -32,7 +32,7 @@ The T-shaped Maze Generator is a Tcl/Tk script designed to create a dynamic T-sh
 
 ### Pointer Management
 
-- **Pointer Creation**: A pointer is created and placed within the maze.
+- A pointer is created and placed within the maze.
 - **Movement Control**:
    - The pointer can only move within the maze's bars, restricted by `isInsideBar` checks.
    - Movement is driven by mouse events (`<B1-Motion>`), allowing real-time interaction.
@@ -54,5 +54,3 @@ The T-shaped Maze Generator is a Tcl/Tk script designed to create a dynamic T-sh
 
 - **Running the Script**: Simply run the script using a Tcl/Tk interpreter.
 - **Interacting with the Maze**: Click and drag within the canvas to move the pointer along the maze paths.
-
-This script provides a basic framework for creating and interacting with a T-shaped maze in Tcl/Tk, demonstrating the capabilities of Tcl/Tk in managing graphical content and user interactions.
