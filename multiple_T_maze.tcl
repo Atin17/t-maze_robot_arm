@@ -2,15 +2,12 @@
 
 package require Tk
 
-# Create a window
 wm title . "T-Shaped Maze Generator"
 canvas .c -width 1600 -height 1600 -background white
 pack .c -expand yes -fill both
 
-# Initialize random seed
 expr {srand([clock seconds])}
 
-# Base T structure
 set bars {
     {800 500 800 700 v} 
     {700 400 900 400 h}  
@@ -23,13 +20,11 @@ proc drawEverything {} {
 
     .c delete all  ;# Clear the canvas
 
-    # Draw the bars
     foreach bar $bars {
         lassign $bar startX startY endX endY orientation
         .c create line $startX $startY $endX $endY -width 40 -fill black
     }
 
-    # Create or recreate the pointer
     if {$pointer_id != "" && [.c exists $pointer_id]} {
         .c coords $pointer_id 800 600 815 615
     } else {
@@ -37,7 +32,6 @@ proc drawEverything {} {
     }
 }
 
-# Function to check for duplicate bars
 proc isDuplicateBar {newBar newBars} {
     foreach bar $newBars {
         if {[lindex $bar 0] == [lindex $newBar 0] &&
@@ -48,11 +42,10 @@ proc isDuplicateBar {newBar newBars} {
         }
     }
 
-    
+ 
     return 0
 }
 
-# Function to add a bar at a random end of the last level's bars
 proc expandMaze {level} {
     global bars
     if {$level <= 1} {
@@ -62,7 +55,6 @@ proc expandMaze {level} {
     set newBars {}
     foreach bar $bars {
         lassign $bar startX startY endX endY orientation
-        # Determine possible new bar positions based on the orientation
         if {$orientation == "v"} {
             set newBar [list [expr {$endX - 100}] $endY [expr {$endX + 100}] $endY h]  ;# Top horizontal
             if {![isDuplicateBar $newBar $newBars] && $endX >= 0 && $endX <= 1600 } {
@@ -84,10 +76,6 @@ proc expandMaze {level} {
         }
     }
 
-    # Choose a random new bar to add
-
-
-    # Keep trying to add a unique new bar until successful
     while {[llength $newBars] > 0} {
         set idx [expr {int(rand() * [llength $newBars])}]
         set candidateBar [lindex $newBars $idx]
@@ -99,11 +87,9 @@ proc expandMaze {level} {
         }
     }
 
-    # Recurse to the next level
     expandMaze [expr {$level - 1}]
 }
 
-# Function to check if a point is inside any bar
 proc isInsideBar {x y} {
     global bars
     foreach bar $bars {
