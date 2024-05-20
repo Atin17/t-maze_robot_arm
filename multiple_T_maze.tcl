@@ -94,59 +94,54 @@ proc isDuplicateBar {newBar newBars} {
 }
 
 # Function to add a bar at a random end of the last level's bars
+# Function to add a bar at a random end of the last level's bars
 proc expandMaze {level} {
-    global bars barWidth barCoordChange
-    if {$level <= 1} {
-        return
-    }
+        global bars barWidth barCoordChange
 
-    set newBars {}
-    foreach bar $bars {
-        lassign $bar startX startY endX endY orientation
-        # Determine possible new bar positions based on the orientation
+        if {$level <= 1} {
+            return
+        }
+
+        set newBars {}
+        set lastBar [lindex $bars end]
+        lassign $lastBar startX startY endX endY orientation
+
         if {$orientation == "v"} {
-            set newBar [list [expr {$endX - $barCoordChange}] [expr {$endY+$barWidth/2}] [expr {$endX + $barCoordChange}] [expr {$endY+$barWidth/2}] h]  ;# Top horizontal
-            if {$endX >= $barCoordChange && [expr {$endX + $barCoordChange}] <= 1920 && $endY <= 1000 } {
-                    lappend newBars $newBar
-                }
-            set newBar [list [expr {$startX - $barCoordChange}] [expr {$startY-$barWidth/2}] [expr {$startX + $barCoordChange}] [expr {$startY-$barWidth/2}] h]  ;# bottom horizontal
-            if {$endX >= $barCoordChange && [expr {$endX + $barCoordChange}] <= 1920 && $startY >= 80 } {
-                    lappend newBars $newBar
-                }
+            set newBar [list [expr {$endX - $barCoordChange}] [expr {$endY + $barWidth / 2}] [expr {$endX + $barCoordChange}] [expr {$endY + $barWidth / 2}] h]  ;# Top horizontal
+            if {$endX >= $barCoordChange && [expr {$endX + $barCoordChange}] <= 1600 && $endY <= 1560} {
+                lappend newBars $newBar
+            }
+            set newBar [list [expr {$startX - $barCoordChange}] [expr {$startY - $barWidth / 2}] [expr {$startX + $barCoordChange}] [expr {$startY - $barWidth / 2}] h]  ;# Bottom horizontal
+            if {$startX >= $barCoordChange && [expr {$startX + $barCoordChange}] <= 1600 && $startY >= $barWidth} {
+                lappend newBars $newBar
+            }
         } elseif {$orientation == "h"} {
-
-            set newBar [list [expr {$startX-$barWidth/2}] [expr {$startY - $barCoordChange}] [expr {$startX-$barWidth/2}] [expr {$startY + $barCoordChange}] v]  ;# left vertical
-            if {$startY >= $barCoordChange && [expr {$startY + $barCoordChange}] <= 1040 && $endX >= 80} {
-                    lappend newBars $newBar
-                }
-            set newBar [list [expr {$endX+$barWidth/2}] [expr {$startY - $barCoordChange}] [expr {$endX+$barWidth/2}] [expr {$startY + $barCoordChange}] v]     ;# right vertical
-            if {$startY >= $barCoordChange && [expr {$startY + $barCoordChange}] <= 1040 && $endX <= 1840} {
-                    lappend newBars $newBar
-                }
+            set newBar [list [expr {$startX - $barWidth / 2}] [expr {$startY - $barCoordChange}] [expr {$startX - $barWidth / 2}] [expr {$startY + $barCoordChange}] v]  ;# Left vertical
+            if {$startY >= $barCoordChange && [expr {$startY + $barCoordChange}] <= 1600 && $startX >= $barWidth} {
+                lappend newBars $newBar
+            }
+            set newBar [list [expr {$endX + $barWidth / 2}] [expr {$startY - $barCoordChange}] [expr {$endX + $barWidth / 2}] [expr {$startY + $barCoordChange}] v]  ;# Right vertical
+            if {$startY >= $barCoordChange && [expr {$startY + $barCoordChange}] <= 1600 && $endX <= 1560} {
+                lappend newBars $newBar
+            }
         }
-    }
-    #puts $newBars
-    # Choose a random new bar to add
 
+        # Keep trying to add a unique new bar until successful
+        while {[llength $newBars] > 0} {
+            set idx [expr {int(rand() * [llength $newBars])}]
+            set candidateBar [lindex $newBars $idx]
 
-    # Keep trying to add a unique new bar until successful
-    while {[llength $newBars] > 0} {
-        set idx [expr {int(rand() * [llength $newBars])}]
-        
-        set candidateBar [lindex $newBars $idx]
-
-        if {![isDuplicateBar $candidateBar $bars]} {
-            lappend bars $candidateBar
-            # puts $bars
-            break
-        } else {
-            set newBars [lreplace $newBars $idx $idx]
+            if {![isDuplicateBar $candidateBar $bars]} {
+                lappend bars $candidateBar
+                break
+            } else {
+                set newBars [lreplace $newBars $idx $idx]
+            }
         }
-    }
 
-    # Recurse to the next level
-    expandMaze [expr {$level - 1}]
-}
+        # Recurse to the next level
+        expandMaze [expr {$level - 1}]
+    }
 
 # Function to check if a point is inside any bar
 proc isInsideBar {x y} {
