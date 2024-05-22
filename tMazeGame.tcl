@@ -136,32 +136,7 @@ proc start_game {} {
                 make_t $x1 $y1 $x2 $y2 $orientation "black"
             }
         }
-        create_pointer
-    }
-
-    proc make_star {x y color size} {
-
-        set pi 3.1415926535897931
-
-        set points {}
-        set counter 0
-        set increment [expr {$pi / 5}]
-
-        for {set i [expr {$pi * -1 / 2}]} { $i < [expr {3 * $pi / 2}]} {set i [expr {$i + $increment}]} {
-            if {$counter % 2 == 0} {
-                set r $size
-            } else {
-                set r [expr {$size / 2}]
-            }
-            set cos [expr {cos($i)}]
-            set sin [expr {sin($i)}]
-            lappend points [expr {$x + $r * $cos}]
-            lappend points [expr {$y + $r * $sin}]
-
-            incr counter
-        }
-        
-        .game.c create polygon $points -fill $color
+        create_pointer 890 490
     }
 
     proc check_pointer_position {} {
@@ -190,13 +165,39 @@ proc start_game {} {
     }
 
     # Function to initialize the pointer
-    proc create_pointer {} {
+    proc create_pointer {a b} {
         global pointer
         if {[info exists pointer]} {
             .game.c delete $pointer
         }
-        set pointer [.game.c create oval 890 490 910 510 -fill white]
+        set pointer [.game.c create oval $a $b [expr {$a + 20}] [expr {$b + 20}] -fill white]
         bind .game.c <B1-Motion> {move_pointer %x %y}
+        focus -force .
+    }
+
+        proc make_star {x y color size} {
+
+        set pi 3.1415926535897931
+
+        set points {}
+        set counter 0
+        set increment [expr {$pi / 5}]
+
+        for {set i [expr {$pi * -1 / 2}]} { $i < [expr {3 * $pi / 2}]} {set i [expr {$i + $increment}]} {
+            if {$counter % 2 == 0} {
+                set r $size
+            } else {
+                set r [expr {$size / 2}]
+            }
+            set cos [expr {cos($i)}]
+            set sin [expr {sin($i)}]
+            lappend points [expr {$x + $r * $cos}]
+            lappend points [expr {$y + $r * $sin}]
+
+            incr counter
+        }
+        
+        .game.c create polygon $points -fill $color
     }
 
     # Function to move the pointer within boundaries
@@ -218,6 +219,7 @@ proc start_game {} {
         set y2 [expr { $cell_height * ($cell_y + 1)}]
 
         if {![info exists t_boundaries($x1,$y1)]} {
+            # puts "BOOM"
             return 0
         }
         set orientation [lindex $t_boundaries($x1,$y1)] 
@@ -246,20 +248,82 @@ proc start_game {} {
     }
 
     proc move_pointer {x y} {
-        global ob .game.c pointer
+        global t_boundaries pointer cell_width cell_height line_width ob .game.c pointer
 
-        if {$x >= 1799} {
-            set x 1799
-        }
-        # puts "$x $y"
+        set coords [.game.c coords $pointer]
+        set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
+        set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
 
-        if {[isInsideBar $x $y]} {
-            set pos [.game.c coords $pointer]
-            lassign $pos x1 y1 x2 y2
-            set dx [expr {$x - ($x1 + $x2) / 2}]
-            set dy [expr {$y - ($y1 + $y2) / 2}]
-            .game.c coords $pointer [expr {$x1 + $dx}] [expr {$y1 + $dy}] [expr {$x2 + $dx}] [expr {$y2 + $dy}]
-            check_pointer_position
+        set cell_x [expr {int($cx / $cell_width)}]
+        set cell_y [expr {int($cy / $cell_height)}]
+
+        set x1 [expr { $cell_width * $cell_x}]
+        set y1 [expr { $cell_height * $cell_y}]
+
+
+        set cx1 [expr {$cx + 20}]
+        set cy1 $cy
+
+        set cx2 [expr {$cx - 20}]
+        set cy2 $cy
+
+        set cx3 $cx
+        set cy3 [expr {$cy + 20}]
+
+        set cx4 $cx
+        set cy4 [expr {$cy - 20}]
+
+        set cell_x1 [expr {int($cx1 / $cell_width)}]
+        set cell_y1 [expr {int($cy1 / $cell_height)}]
+
+        set cell_x2 [expr {int($cx2 / $cell_width)}]
+        set cell_y2 [expr {int($cy2 / $cell_height)}]
+
+        set cell_x3 [expr {int($cx3 / $cell_width)}]
+        set cell_y3 [expr {int($cy3 / $cell_height)}]
+
+        set cell_x4 [expr {int($cx4 / $cell_width)}]
+        set cell_y4 [expr {int($cy4 / $cell_height)}]
+
+        set x1_1 [expr { $cell_width * $cell_x1}]
+        set y1_1 [expr { $cell_height * $cell_y1}]
+
+        set x2_1 [expr { $cell_width * $cell_x2}]
+        set y2_1 [expr { $cell_height * $cell_y2}]
+
+        set x3_1 [expr { $cell_width * $cell_x3}]
+        set y3_1 [expr { $cell_height * $cell_y3}]
+
+        set x4_1 [expr { $cell_width * $cell_x4}]
+        set y4_1 [expr { $cell_height * $cell_y4}]
+
+
+        if {![info exists t_boundaries($x1,$y1)]} {
+            .game.c delete $pointer
+            create_pointer 890 490
+        } elseif {![info exists t_boundaries($x1_1,$y1_1)]} {
+            .game.c delete $pointer
+            create_pointer [expr {$cx - 20}] $cy
+        } elseif {![info exists t_boundaries($x2_1,$y2_1)]} {
+            .game.c delete $pointer
+            create_pointer [expr {$cx + 20}] $cy
+        } elseif {![info exists t_boundaries($x3_1,$y3_1)]} {
+            .game.c delete $pointer
+            create_pointer $cx [expr {$cy - 20}]
+        } elseif {![info exists t_boundaries($x4_1,$y4_1)]} {
+            .game.c delete $pointer
+            create_pointer $cx [expr {$cy + 20}]
+        } else {
+            # puts "BOOM"
+            # puts "$x $y"
+            if {[isInsideBar $x $y]} {
+                set pos [.game.c coords $pointer]
+                lassign $pos x1 y1 x2 y2
+                set dx [expr {$x - ($x1 + $x2) / 2}]
+                set dy [expr {$y - ($y1 + $y2) / 2}]
+                .game.c coords $pointer [expr {$x1 + $dx}] [expr {$y1 + $dy}] [expr {$x2 + $dx}] [expr {$y2 + $dy}]
+                check_pointer_position
+            }
         }
     }
 
@@ -267,7 +331,7 @@ proc start_game {} {
     draw_path $path 2
 
     # Create and bind the pointer
-    create_pointer
+    create_pointer 890 490
 }
 
 # Given path
@@ -319,6 +383,3 @@ set half_cell_height [expr {$cell_height / 2}]
 set line_width 80
 # Open the start menu
 open_start_menu
-
-# Start the Tk event loop
-
