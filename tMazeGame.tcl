@@ -139,6 +139,31 @@ proc start_game {} {
         create_pointer
     }
 
+    proc make_star {x y color size} {
+
+        set pi 3.1415926535897931
+
+        set points {}
+        set counter 0
+        set increment [expr {$pi / 5}]
+
+        for {set i [expr {$pi * -1 / 2}]} { $i < [expr {3 * $pi / 2}]} {set i [expr {$i + $increment}]} {
+            if {$counter % 2 == 0} {
+                set r $size
+            } else {
+                set r [expr {$size / 2}]
+            }
+            set cos [expr {cos($i)}]
+            set sin [expr {sin($i)}]
+            lappend points [expr {$x + $r * $cos}]
+            lappend points [expr {$y + $r * $sin}]
+
+            incr counter
+        }
+        
+        .game.c create polygon $points -fill $color
+    }
+
     proc check_pointer_position {} {
         global pointer path level max_level_length mode increment cell_width cell_height
         set coords [.game.c coords $pointer]
