@@ -27,7 +27,7 @@ T-Maze Game is an interactive game built with Tcl/Tk. The game involves navigati
 
 1. Run the game script:
     ```sh
-    tclsh maze_game.tcl
+    tclsh tMazeGame.tcl
     ```
 
 2. The start menu will appear with the following options:
