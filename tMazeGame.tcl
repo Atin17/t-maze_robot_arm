@@ -59,6 +59,7 @@ proc start_game {} {
     set short_arm_length [expr {$line_width / 2}]
     set pointer_size 20
     array set t_boundaries {}
+    array set star_location {}
     set level 1
     set max_level_length [llength $path]
 
@@ -103,7 +104,9 @@ proc start_game {} {
 
     # Function to draw the path
     proc draw_path {path level_length} {
-        global cell_width cell_height
+        global cell_width cell_height star_location
+        set star_size 16
+        set star_count 2
         .game.c delete all
 
         array unset t_boundaries
@@ -134,6 +137,25 @@ proc start_game {} {
                 make_t $x1 $y1 $x2 $y2 $orientation "green"
             } else {
                 make_t $x1 $y1 $x2 $y2 $orientation "black"
+                set count 0
+                if {[info exists star_location($x1,$y1,$count,x)]} {
+                    while {$count < $star_count} {
+                        make_star $star_location($x1,$y1,$count,x) $star_location($x1,$y1,$count,y) "red" $star_size
+                        incr count
+                    }
+                } else {
+                    while {$count < $star_count} {
+                        set random_x [expr {rand() * ($x2-$x1) + $x1}]
+                        set random_y [expr {rand() * ($y2-$y1) + $y1}]
+                        if {[isInsideBar $random_x $random_y $random_x $random_y]} {
+                            set star_location($x1,$y1,$count,x) $random_x
+                            set star_location($x1,$y1,$count,y) $random_y
+                            make_star $random_x $random_y "red" $star_size
+                            incr count
+                        }
+                    }
+                }
+                
             }
         }
         create_pointer 890 490
@@ -175,7 +197,7 @@ proc start_game {} {
         focus -force .
     }
 
-        proc make_star {x y color size} {
+    proc make_star {x y color size} {
 
         set pi 3.1415926535897931
 
@@ -201,13 +223,8 @@ proc start_game {} {
     }
 
     # Function to move the pointer within boundaries
-    proc isInsideBar {x y} {
+    proc isInsideBar {x y cx cy} {
         global t_boundaries pointer cell_width cell_height line_width
-
-        set pointer_size 20
-        set coords [.game.c coords $pointer]
-        set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
-        set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
 
         set cell_x [expr {int($cx / $cell_width)}]
         set cell_y [expr {int($cy / $cell_height)}]
@@ -316,7 +333,7 @@ proc start_game {} {
         } else {
             # puts "BOOM"
             # puts "$x $y"
-            if {[isInsideBar $x $y]} {
+            if {[isInsideBar $x $y $cx $cy]} {
                 set pos [.game.c coords $pointer]
                 lassign $pos x1 y1 x2 y2
                 set dx [expr {$x - ($x1 + $x2) / 2}]
