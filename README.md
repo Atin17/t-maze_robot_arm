@@ -1,56 +1,49 @@
-# T-Shaped Maze Generator
+# T-Maze Game
 
-The T-shaped Maze Generator is a Tcl/Tk script designed to create a dynamic T-shaped maze. The maze complexity increases with levels, allowing for an interactive experience with a pointer that can only move within the defined maze boundaries.
+T-Maze Game is an interactive game built with Tcl/Tk. The game involves navigating through a series of T-shaped mazes with two different game modes: sequential and incremental.
 
 ## Features
 
-- Generates a T-shaped maze that becomes more complex with each level.
-- Includes a movable pointer that responds to mouse movements but is confined within the maze boundaries.
-- Allows the expansion of the maze up to a specified number of levels through recursive function calls.
+- **Two Game Modes**:
+  - **Sequential Mode**: The level increases by one each time you reach the target.
+  - **Incremental Mode**: The level increases by a specified amount (e.g., +2, +3, +4) each time you reach the target.
+- **Start Menu**: Select the game mode and level increment before starting the game.
+- **Interactive Gameplay**: Use the mouse to navigate through the T-shaped maze.
 
-## How It Works
+## Requirements
 
-### Initialization
+- Tcl/Tk 8.6 or higher
 
-1. **Window and Canvas Setup**:
-   - A Tk window is created with a canvas of size 1600x1600 pixels.
-   - The canvas background is set to white.
+## Installation
 
-2. **Random Seed Initialization**:
-   - The random seed is initialized to ensure different random outcomes in each session for the placement of new maze bars.
-
-### Maze Structure
-
-- **Base Structure**: The script starts with a basic T-shape composed of one vertical and one horizontal bar.
-- **Expansion Logic**: Additional bars are added recursively at random ends of the existing bars to increase the maze's complexity.
-
-### Drawing the Maze
-
-- **`drawEverything` Procedure**:
-   - Clears the canvas and redraws the maze.
-   - Ensures the pointer is redrawn or repositioned correctly after clearing the canvas.
-
-### Pointer Management
-
-- A pointer is created and placed within the maze.
-- **Movement Control**:
-   - The pointer can only move within the maze's bars, restricted by `isInsideBar` checks.
-   - Movement is driven by mouse events (`<B1-Motion>`), allowing real-time interaction.
-
-### Maze Expansion
-
-- **`expandMaze` Procedure**:
-   - Determines potential new bar positions based on the current bar orientations.
-   - Ensures no duplicate bars are added and that bars do not extend outside the canvas boundaries.
-   - Randomly selects a new bar to add from the potential positions.
-   - Recursively calls itself until the desired maze complexity (level) is reached.
-
-### Collision and Boundary Detection
-
-- **`isInsideBar` Function**:
-   - Checks if the given point (mouse cursor position) is within any of the maze bars before allowing the pointer to move to that position.
+1. Ensure you have Tcl/Tk installed on your system. You can download it from [ActiveState Tcl](https://www.activestate.com/products/tcl/).
+2. Clone this repository:
+    ```sh
+    git clone https://github.com/yourusername/maze-game.git
+    cd maze-game
+    ```
 
 ## Usage
 
-- **Running the Script**: Simply run the script using a Tcl/Tk interpreter.
-- **Interacting with the Maze**: Click and drag within the canvas to move the pointer along the maze paths.
+1. Run the game script:
+    ```sh
+    wish maze_game.tcl
+    ```
+
+2. The start menu will appear with the following options:
+    - **Start Game**: Begin the game with the selected options.
+    - **Select Game Mode**: Choose between Sequential and Incremental mode.
+    - **Level Increment**: Specify the level increment for Incremental mode.
+    - **Exit**: Close the game.
+
+3. After starting the game, navigate through the maze using the mouse. Reach the target to advance to the next level.
+
+## Game Modes
+
+### Sequential Mode
+
+In Sequential Mode, the level increases by one each time you reach the target.
+
+### Incremental Mode
+
+In Incremental Mode, the level increases by the specified amount each time you reach the target. You can choose the increment value from the start menu.
