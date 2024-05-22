@@ -19,7 +19,7 @@ T-Maze Game is an interactive game built with Tcl/Tk. The game involves navigati
 1. Ensure you have Tcl/Tk installed on your system. You can download it from [ActiveState Tcl](https://www.activestate.com/products/tcl/).
 2. Clone this repository:
     ```sh
-    git clone https://github.com/yourusername/maze-game.git
+    git clone https://github.com/atin17/maze-game.git
     cd maze-game
     ```
 
@@ -27,7 +27,7 @@ T-Maze Game is an interactive game built with Tcl/Tk. The game involves navigati
 
 1. Run the game script:
     ```sh
-    wish maze_game.tcl
+    tclsh maze_game.tcl
     ```
 
 2. The start menu will appear with the following options:
