@@ -19,8 +19,8 @@ T-Maze Game is an interactive game built with Tcl/Tk. The game involves navigati
 1. Ensure you have Tcl/Tk installed on your system. You can download it from [ActiveState Tcl](https://www.activestate.com/products/tcl/).
 2. Clone this repository:
     ```sh
-    git clone https://github.com/atin17/maze-game.git
-    cd maze-game
+    git clone https://github.com/atin17/t-maze_robot_arm.git
+    cd t-maze_robot_arm
     ```
 
 ## Usage
