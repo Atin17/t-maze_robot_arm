@@ -58,6 +58,7 @@ proc start_game {} {
     set line_width 80
     set short_arm_length [expr {$line_width / 2}]
     set pointer_size 20
+    set current_path_no 0
     array set t_boundaries {}
     array set star_location {}
     set level 1
@@ -73,8 +74,7 @@ proc start_game {} {
 
     # Function to draw T shapes and record boundaries
     proc make_t {x1 y1 x2 y2 orientation colour} {
-        global line_width t_boundaries
-
+        global current_path_no line_width t_boundaries
         set x_middle [expr {($x2 + $x1) / 2}]
         set y_middle [expr {($y2 + $y1) / 2}]
 
@@ -162,7 +162,7 @@ proc start_game {} {
     }
 
     proc check_pointer_position {} {
-        global pointer path level max_level_length mode increment cell_width cell_height
+        global pointer path level max_level_length mode increment cell_width cell_height current_path_no
         set coords [.game.c coords $pointer]
         set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
         set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
@@ -182,6 +182,8 @@ proc start_game {} {
                 puts "Congratulations! You've completed all levels."
                 exit
             }
+            puts "target"
+            set current_path_no 0
             after 500 [list draw_path $path [expr {$level * 2}]]
         }
     }
@@ -224,7 +226,7 @@ proc start_game {} {
 
     # Function to move the pointer within boundaries
     proc isInsideBar {x y cx cy} {
-        global t_boundaries pointer cell_width cell_height line_width
+        global t_boundaries pointer cell_width cell_height line_width path
 
         set cell_x [expr {int($cx / $cell_width)}]
         set cell_y [expr {int($cy / $cell_height)}]
@@ -261,6 +263,53 @@ proc start_game {} {
                 return [expr {($x > $x_middle - $line_width / 2) && ($x < $x_middle + $line_width / 2) ||
                               ($x > [expr {$x_middle + $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}]) && ($y < [expr {$y_middle + $line_width / 2}]) }]
             }
+        }
+    }
+
+    proc set_movebox { } {
+        global t_boundaries pointer cell_width cell_height line_width ob .game.c pointer current_path_no path
+        set current_box [lindex $path $current_path_no]
+        puts $current_box
+
+        set coords [.game.c coords $pointer]
+        set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
+        set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
+        puts "${cx}_${cy}"
+        puts $current_path_no
+
+        set cell_x [expr {int($cx / $cell_width)}]
+        set cell_y [expr {int($cy / $cell_height)}]
+
+        if {$cell_x != [lindex $current_box 1] || $cell_y != [lindex $current_box 0]} {
+            #close current movebox
+            incr current_path_no
+            set next_box [lindex $path $current_path_no]
+            set next_x [lindex $next_box 1]
+            set next_y [lindex $next_box 0]
+            set current_x [lindex $current_box 1]
+            set current_y [lindex $current_box 0]
+            set x1 [expr { $cell_width * $next_x}]
+            set x2 [expr { $cell_width * ($next_x + 1)}]
+            set y1 [expr { $cell_height * $next_y}]
+            set y2 [expr { $cell_height * ($next_y + 1)}]
+            set x_middle [expr { ($x2 + $x1) / 2 }]
+            set y_middle [expr { ($y2 + $y1) / 2 }]
+            if { [expr {$next_x - $current_x}] == 1} {
+                # coming from right, right to left
+                .game.c create line $x1 $y_middle $x2 $y_middle -width [expr {$line_width / 2}] -fill "red"
+            } elseif {[expr {$next_x - $current_x}] == -1} {
+                #coming from left
+                .game.c create line $x2 $y_middle $x1 $y_middle -width [expr {$line_width / 2}] -fill "red"
+            } elseif {[expr {$next_y - $current_y}] == 1} {
+                # coming from above
+                .game.c create line $x_middle $y1 $x_middle $y2 -width [expr {$line_width / 2}] -fill "red"
+            } elseif {[expr {$next_y - $current_y}] == -1} {
+                #coming from below
+                .game.c create line $x_middle $y2 $x_middle $y1 -width [expr {$line_width / 2}] -fill "red"
+            } 
+        } else {
+            # check for turns
+
         }
     }
 
@@ -339,6 +388,7 @@ proc start_game {} {
                 set dx [expr {$x - ($x1 + $x2) / 2}]
                 set dy [expr {$y - ($y1 + $y2) / 2}]
                 .game.c coords $pointer [expr {$x1 + $dx}] [expr {$y1 + $dy}] [expr {$x2 + $dx}] [expr {$y2 + $dy}]
+                set_movebox
                 check_pointer_position
             }
         }
@@ -398,5 +448,7 @@ set cell_height [expr {$canvas_height / $grid_height}]
 set half_cell_width [expr {$cell_width / 2}]
 set half_cell_height [expr {$cell_height / 2}]
 set line_width 80
+set current_path_no 0
+
 # Open the start menu
 open_start_menu
