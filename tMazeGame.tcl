@@ -58,9 +58,9 @@ proc start_game {} {
     set line_width 80
     set short_arm_length [expr {$line_width / 2}]
     set pointer_size 20
-    set current_path_no 0
     array set t_boundaries {}
     array set star_location {}
+    
     set level 1
     set max_level_length [llength $path]
 
@@ -74,7 +74,8 @@ proc start_game {} {
 
     # Function to draw T shapes and record boundaries
     proc make_t {x1 y1 x2 y2 orientation colour} {
-        global current_path_no line_width t_boundaries
+        global line_width t_boundaries
+
         set x_middle [expr {($x2 + $x1) / 2}]
         set y_middle [expr {($y2 + $y1) / 2}]
 
@@ -104,16 +105,18 @@ proc start_game {} {
 
     # Function to draw the path
     proc draw_path {path level_length} {
-        global cell_width cell_height star_location
-        set star_size 16
-        set star_count 2
+        global cell_width cell_height move_segments line_width
         .game.c delete all
 
         array unset t_boundaries
+        array unset move_segments 
+
         for {set i 0} {$i < $level_length} {incr i} {
+            set prev [lindex $path $i-1]
             set current [lindex $path $i]
             set next [lindex $path $i+1]
 
+            set direction3 [lindex $prev 2]
             set direction1 [lindex $current 2]
             set direction2 [lindex $next 2]
 
@@ -122,6 +125,17 @@ proc start_game {} {
 
             set y1 [expr { $cell_height * [lindex $current 0]}]
             set y2 [expr { $cell_height * ([lindex $current 0] + 1)}]
+
+            set x1_n [expr { $cell_width * [lindex $next 1]}]
+            set x2_n [expr { $cell_width * ([lindex $next 1] + 1)}]
+            set y1_n [expr { $cell_height * [lindex $next 0]}]
+            set y2_n [expr { $cell_height * ([lindex $next 0] + 1)}]
+
+            set x_middle [expr {($x2 + $x1) / 2}]
+            set y_middle [expr {($y2 + $y1) / 2}]
+
+            set x_middle_n [expr {($x2_n + $x1_n) / 2}]
+            set y_middle_n [expr {($y2_n + $y1_n) / 2}]
 
             if {$direction1 == "up"} {
                 set orientation "S"
@@ -133,137 +147,84 @@ proc start_game {} {
                 set orientation "W"
             }
 
+            if {![info exists segment_start_index]} {
+                if {$i == 0} {
+                set segment_start_index [list $x2 $y_middle]
+                } elseif {$x1 == $x1_n} {
+                    if {$y1 > $y1_n} {
+                        set segment_start_index [list $x_middle $y2]
+                    } else {
+                        set segment_start_index [list $x_middle $y1]
+                    }
+                } else {
+                    if {$x1 > $x1_n} {
+                        set segment_start_index [list $x2 $y_middle]
+                    } else {
+                        set segment_start_index [list $x1 $y_middle]
+                    }
+                }
+            }
+
             if {$i == $level_length - 1} {
                 make_t $x1 $y1 $x2 $y2 $orientation "green"
             } else {
                 make_t $x1 $y1 $x2 $y2 $orientation "black"
-                set count 0
-                if {[info exists star_location($x1,$y1,$count,x)]} {
-                    while {$count < $star_count} {
-                        make_star $star_location($x1,$y1,$count,x) $star_location($x1,$y1,$count,y) "red" $star_size
-                        incr count
+            }
+
+
+            # set segment_end_index 0
+
+            if {$direction1 == "N"} {
+                set direction1 "S"
+            } elseif {$direction1 == "E"} {
+                set direction1 "W"
+            }
+            if {$direction2 == "N"} {
+                set direction2 "S"
+            } elseif {$direction2 == "E"} {
+                set direction2 "W"
+            }
+
+
+            if {$direction1 ne $direction2} {
+                if {[lindex $current 0] == [lindex $prev 0]} {
+                    if {[lindex $current 0] == [lindex $next 0]} {
+                            set segment_end_index [list [expr {$x_middle_n - $line_width/2}] $y_middle_n]
+                            lappend move_segments [list $segment_start_index $segment_end_index]
+                            .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+
+                            unset segment_start_index
                     }
-                } else {
-                    while {$count < $star_count} {
-                        set random_x [expr {rand() * ($x2-$x1) + $x1}]
-                        set random_y [expr {rand() * ($y2-$y1) + $y1}]
-                        if {[isInsideBar $random_x $random_y $random_x $random_y]} {
-                            set star_location($x1,$y1,$count,x) $random_x
-                            set star_location($x1,$y1,$count,y) $random_y
-                            make_star $random_x $random_y "red" $star_size
-                            incr count
-                        }
+                    if {[lindex $current 1] == [lindex $next 1]} {
+                        set segment_end_index [list [expr {$x_middle + $line_width/2}] $y_middle]
+                        lappend move_segments [list $segment_start_index $segment_end_index]
+                        .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+
+                        set segment_start_index [list $x_middle [expr {$y_middle - $line_width/2}]]
+                    }                     
+                } elseif {[lindex $current 1] == [lindex $prev 1]} {
+                    if {[lindex $current 0] == [lindex $next 0]} {
+                            set segment_end_index [list $x_middle [expr {$y_middle + $line_width/2}]]
+                            lappend move_segments [list $segment_start_index $segment_end_index]
+                            .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+                            set segment_start_index [list [expr {$x_middle - $line_width/2}] $y_middle]
                     }
+                    if {[lindex $current 1] == [lindex $next 1]} {
+                        set segment_end_index [list $x_middle_n [expr {$y_middle_n + $line_width/2}]]
+                        lappend move_segments [list $segment_start_index $segment_end_index]
+                        .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+
+                        unset segment_start_index
+                    }    
                 }
+                # .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
                 
+                # set segment_start_index [expr {$i + 1}]
             }
         }
+
+        puts "Move Segments: $move_segments"
         create_pointer 890 490
-    }
-
-    proc check_pointer_position {} {
-        global pointer path level max_level_length mode increment cell_width cell_height current_path_no
-        set coords [.game.c coords $pointer]
-        set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
-        set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
-        set final_cell [lindex $path [expr {$level * 2  - 1}]]
-        set final_x [expr { int($cx / $cell_width)}]
-        set final_y [expr { int($cy / $cell_height)}]
-        puts "$final_cell $final_x $final_y"
-
-        if {$final_x == [lindex $final_cell 1] && $final_y == [lindex $final_cell 0]} {
-            if {$mode == "sequential"} {
-                incr level
-            } else {
-                incr level $increment
-                puts $level
-            }
-            if {$level * 2 > $max_level_length} {
-                puts "Congratulations! You've completed all levels."
-                exit
-            }
-            puts "target"
-            set current_path_no 0
-            after 500 [list draw_path $path [expr {$level * 2}]]
-        }
-    }
-
-    # Function to initialize the pointer
-    proc create_pointer {a b} {
-        global pointer
-        if {[info exists pointer]} {
-            .game.c delete $pointer
-        }
-        set pointer [.game.c create oval $a $b [expr {$a + 20}] [expr {$b + 20}] -fill white]
-        bind .game.c <B1-Motion> {move_pointer %x %y}
-        focus -force .
-    }
-
-    proc make_star {x y color size} {
-
-        set pi 3.1415926535897931
-
-        set points {}
-        set counter 0
-        set increment [expr {$pi / 5}]
-
-        for {set i [expr {$pi * -1 / 2}]} { $i < [expr {3 * $pi / 2}]} {set i [expr {$i + $increment}]} {
-            if {$counter % 2 == 0} {
-                set r $size
-            } else {
-                set r [expr {$size / 2}]
-            }
-            set cos [expr {cos($i)}]
-            set sin [expr {sin($i)}]
-            lappend points [expr {$x + $r * $cos}]
-            lappend points [expr {$y + $r * $sin}]
-
-            incr counter
-        }
-        
-        .game.c create polygon $points -fill $color
-    }
-
-    # Function to move the pointer within boundaries
-    proc isInsideBar {x y cx cy} {
-        global t_boundaries pointer cell_width cell_height line_width path
-
-        set cell_x [expr {int($cx / $cell_width)}]
-        set cell_y [expr {int($cy / $cell_height)}]
-
-        set x1 [expr { $cell_width * $cell_x}]
-        set x2 [expr { $cell_width * ($cell_x + 1)}]
-
-        set y1 [expr { $cell_height * $cell_y}]
-        set y2 [expr { $cell_height * ($cell_y + 1)}]
-
-        if {![info exists t_boundaries($x1,$y1)]} {
-            # puts "BOOM"
-            return 0
-        }
-        set orientation [lindex $t_boundaries($x1,$y1)] 
-
-        set x_middle [expr { ($x2 + $x1) / 2 }]
-        set y_middle [expr { ($y2 + $y1) / 2 }]
-
-        switch $orientation {
-            "N" {
-                return [expr {($x >= $x_middle - $line_width / 2) && ($x <= $x_middle + $line_width / 2) && ($y > [expr {$y_middle + $line_width / 2}]) ||
-                              ($y < [expr {$y_middle + $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}])}]
-            }
-            "S" {
-                return  [expr {($x >= $x_middle - $line_width / 2) && ($x <= $x_middle + $line_width / 2) && ($y < [expr {$y_middle - $line_width / 2}]) ||
-                              ($y < [expr {$y_middle + $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}]) }]
-            }
-            "E" {
-                return  [expr {($x > $x_middle - $line_width / 2) && ($x < $x_middle + $line_width / 2) ||
-                              ($x < [expr {$x_middle - $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}]) && ($y < [expr {$y_middle + $line_width / 2}]) }]
-            }
-            "W" {
-                return [expr {($x > $x_middle - $line_width / 2) && ($x < $x_middle + $line_width / 2) ||
-                              ($x > [expr {$x_middle + $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}]) && ($y < [expr {$y_middle + $line_width / 2}]) }]
-            }
-        }
     }
 
     proc set_movebox { } {
@@ -310,6 +271,112 @@ proc start_game {} {
         } else {
             # check for turns
 
+        }
+    }
+
+
+    proc check_pointer_position {} {
+        global pointer path level max_level_length mode increment cell_width cell_height
+        set coords [.game.c coords $pointer]
+        set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
+        set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
+        set final_cell [lindex $path [expr {$level * 2  - 1}]]
+        set final_x [expr { int($cx / $cell_width)}]
+        set final_y [expr { int($cy / $cell_height)}]
+        # puts "$final_cell $final_x $final_y"
+
+        if {$final_x == [lindex $final_cell 1] && $final_y == [lindex $final_cell 0]} {
+            if {$mode == "sequential"} {
+                incr level
+            } else {
+                incr level $increment
+                puts $level
+            }
+            if {$level * 2 > $max_level_length} {
+                puts "Congratulations! You've completed all levels."
+                exit
+            }
+            after 500 [list draw_path $path [expr {$level * 2}]]
+        }
+    }
+
+    # Function to initialize the pointer
+    proc create_pointer {a b} {
+        global pointer
+        if {[info exists pointer]} {
+            .game.c delete $pointer
+        }
+        set pointer [.game.c create oval $a $b [expr {$a + 20}] [expr {$b + 20}] -fill white]
+        bind .game.c <B1-Motion> {move_pointer %x %y}
+        focus -force .
+    }
+
+    proc make_star {x y color size} {
+
+        set pi 3.1415926535897931
+
+        set points {}
+        set counter 0
+        set increment [expr {$pi / 5}]
+
+        for {set i [expr {$pi * -1 / 2}]} { $i < [expr {3 * $pi / 2}]} {set i [expr {$i + $increment}]} {
+            if {$counter % 2 == 0} {
+                set r $size
+            } else {
+                set r [expr {$size / 2}]
+            }
+            set cos [expr {cos($i)}]
+            set sin [expr {sin($i)}]
+            lappend points [expr {$x + $r * $cos}]
+            lappend points [expr {$y + $r * $sin}]
+
+            incr counter
+        }
+        
+        .game.c create polygon $points -fill $color
+    }
+
+    
+
+    # Function to move the pointer within boundaries
+    proc isInsideBar {x y cx cy} {
+        global t_boundaries pointer cell_width cell_height line_width
+
+        set cell_x [expr {int($cx / $cell_width)}]
+        set cell_y [expr {int($cy / $cell_height)}]
+
+        set x1 [expr { $cell_width * $cell_x}]
+        set x2 [expr { $cell_width * ($cell_x + 1)}]
+
+        set y1 [expr { $cell_height * $cell_y}]
+        set y2 [expr { $cell_height * ($cell_y + 1)}]
+
+        if {![info exists t_boundaries($x1,$y1)]} {
+            # puts "BOOM"
+            return 0
+        }
+        set orientation [lindex $t_boundaries($x1,$y1)] 
+
+        set x_middle [expr { ($x2 + $x1) / 2 }]
+        set y_middle [expr { ($y2 + $y1) / 2 }]
+
+        switch $orientation {
+            "N" {
+                return [expr {($x >= $x_middle - $line_width / 2) && ($x <= $x_middle + $line_width / 2) && ($y > [expr {$y_middle + $line_width / 2}]) ||
+                              ($y < [expr {$y_middle + $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}])}]
+            }
+            "S" {
+                return  [expr {($x >= $x_middle - $line_width / 2) && ($x <= $x_middle + $line_width / 2) && ($y < [expr {$y_middle - $line_width / 2}]) ||
+                              ($y < [expr {$y_middle + $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}]) }]
+            }
+            "E" {
+                return  [expr {($x > $x_middle - $line_width / 2) && ($x < $x_middle + $line_width / 2) ||
+                              ($x < [expr {$x_middle - $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}]) && ($y < [expr {$y_middle + $line_width / 2}]) }]
+            }
+            "W" {
+                return [expr {($x > $x_middle - $line_width / 2) && ($x < $x_middle + $line_width / 2) ||
+                              ($x > [expr {$x_middle + $line_width / 2}]) && ($y > [expr {$y_middle - $line_width / 2}]) && ($y < [expr {$y_middle + $line_width / 2}]) }]
+            }
         }
     }
 
@@ -388,7 +455,6 @@ proc start_game {} {
                 set dx [expr {$x - ($x1 + $x2) / 2}]
                 set dy [expr {$y - ($y1 + $y2) / 2}]
                 .game.c coords $pointer [expr {$x1 + $dx}] [expr {$y1 + $dy}] [expr {$x2 + $dx}] [expr {$y2 + $dy}]
-                set_movebox
                 check_pointer_position
             }
         }
@@ -413,20 +479,20 @@ set path {
     {3 4 right}
     {3 5 down}
     {4 5 right}
-    {4 6 down}
-    {3 6 left}
+    {4 6 up}
+    {3 6 right}
     {2 6 left}
-    {1 6 left}
-    {0 6 left}
-    {0 5 up}
-    {1 5 down}
+    {1 6 right}
+    {0 6 down}
+    {0 5 down}
+    {1 5 left}
     {1 4 up}
     {1 3 up}
     {1 2 up}
     {0 2 left}
     {0 1 up}
     {1 1 right}
-    {2 1 left}
+    {2 1 up}
     {2 0 up}
     {1 0 left}
     {0 0 left}
@@ -437,6 +503,7 @@ set level 1
 set mode "sequential"
 set increment 1
 array set t_boundaries {}
+array set move_segments {}
 
 set canvas_width 1800
 set canvas_height 1000
@@ -448,7 +515,5 @@ set cell_height [expr {$canvas_height / $grid_height}]
 set half_cell_width [expr {$cell_width / 2}]
 set half_cell_height [expr {$cell_height / 2}]
 set line_width 80
-set current_path_no 0
-
 # Open the start menu
 open_start_menu
