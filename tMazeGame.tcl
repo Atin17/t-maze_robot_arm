@@ -196,18 +196,36 @@ proc start_game {} {
                             unset segment_start_index
                     }
                     if {[lindex $current 1] == [lindex $next 1]} {
-                        set segment_end_index [list [expr {$x_middle + $line_width/2}] $y_middle]
+                        if {[lindex $current 1] > [lindex $prev 1]} {
+                            set segment_end_index [list [expr {$x_middle + $line_width/2}] $y_middle]
+                        } else {
+                            set segment_end_index [list [expr {$x_middle - $line_width/2}] $y_middle]
+                        }
+                        
                         lappend move_segments [list $segment_start_index $segment_end_index]
                         .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
 
-                        set segment_start_index [list $x_middle [expr {$y_middle - $line_width/2}]]
+                        if {[lindex $current 0] > [lindex $next 0]} {
+                            set segment_start_index [list $x_middle [expr {$y_middle + $line_width/2}]]
+                        } else {
+                            set segment_start_index [list $x_middle [expr {$y_middle - $line_width/2}]]
+                        }
                     }                     
                 } elseif {[lindex $current 1] == [lindex $prev 1]} {
                     if {[lindex $current 0] == [lindex $next 0]} {
+                        if {[lindex $current 0] > [lindex $prev 0]} {
                             set segment_end_index [list $x_middle [expr {$y_middle + $line_width/2}]]
-                            lappend move_segments [list $segment_start_index $segment_end_index]
-                            .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+                        } else {
+                            set segment_end_index [list $x_middle [expr {$y_middle - $line_width/2}]]
+                        }
+                        lappend move_segments [list $segment_start_index $segment_end_index]
+                        .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+                        if {[lindex $current 1] < [lindex $next 1]} {
                             set segment_start_index [list [expr {$x_middle - $line_width/2}] $y_middle]
+                        } else {
+                            set segment_start_index [list [expr {$x_middle + $line_width/2}] $y_middle]
+                        }
+                        
                     }
                     if {[lindex $current 1] == [lindex $next 1]} {
                         set segment_end_index [list $x_middle_n [expr {$y_middle_n + $line_width/2}]]
