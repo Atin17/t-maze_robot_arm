@@ -51,6 +51,7 @@ proc start_game {} {
     set canvas_height 1000
     set grid_width 9
     set grid_height 5
+    set segment_index 0
     set cell_width [expr {$canvas_width / $grid_width}]
     set cell_height [expr {$canvas_height / $grid_height}]
     set half_cell_width [expr {$cell_width / 2}]
@@ -191,7 +192,7 @@ proc start_game {} {
                     if {[lindex $current 0] == [lindex $next 0]} {
                             set segment_end_index [list [expr {$x_middle_n - $line_width/2}] $y_middle_n]
                             lappend move_segments [list $segment_start_index $segment_end_index]
-                            .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+                            # .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
 
                             unset segment_start_index
                     }
@@ -203,7 +204,7 @@ proc start_game {} {
                         }
                         
                         lappend move_segments [list $segment_start_index $segment_end_index]
-                        .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+                        # .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
 
                         if {[lindex $current 0] > [lindex $next 0]} {
                             set segment_start_index [list $x_middle [expr {$y_middle + $line_width/2}]]
@@ -219,7 +220,7 @@ proc start_game {} {
                             set segment_end_index [list $x_middle [expr {$y_middle - $line_width/2}]]
                         }
                         lappend move_segments [list $segment_start_index $segment_end_index]
-                        .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+                        # .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
                         if {[lindex $current 1] < [lindex $next 1]} {
                             set segment_start_index [list [expr {$x_middle - $line_width/2}] $y_middle]
                         } else {
@@ -230,7 +231,7 @@ proc start_game {} {
                     if {[lindex $current 1] == [lindex $next 1]} {
                         set segment_end_index [list $x_middle_n [expr {$y_middle_n + $line_width/2}]]
                         lappend move_segments [list $segment_start_index $segment_end_index]
-                        .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
+                        # .game.c create line [lindex $segment_start_index 0] [lindex $segment_start_index 1]  [lindex $segment_end_index 0] [lindex $segment_end_index 1] -width [expr {$line_width / 2}] -fill "red"
 
                         unset segment_start_index
                     }    
@@ -241,90 +242,110 @@ proc start_game {} {
             }
         }
 
-        puts "Move Segments: $move_segments"
-        create_pointer 890 490
+    puts "Move Segments: $move_segments"
+    display_next_segment
+    create_pointer 890 490
+}
+
+proc display_next_segment {} {
+    global move_segments segment_index line_width
+
+    if { $segment_index < [llength $move_segments] } {
+        set segment [lindex $move_segments $segment_index]
+        set start [lindex $segment 0]
+        set end [lindex $segment 1]
+
+        .game.c create line [lindex $start 0] [lindex $start 1] [lindex $end 0] [lindex $end 1] -width [expr {$line_width / 2}] -fill red
+        incr segment_index
     }
+}
 
-    proc set_movebox { } {
-        global t_boundaries pointer cell_width cell_height line_width ob .game.c pointer current_path_no path
-        set current_box [lindex $path $current_path_no]
-        puts $current_box
-
+    proc check_movebox {} {
+        global pointer path level max_level_length mode increment cell_width cell_height line_width current_movebox_index move_segments
         set coords [.game.c coords $pointer]
+        puts $current_movebox_index
+
         set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
         set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
-        puts "${cx}_${cy}"
-        puts $current_path_no
 
-        set cell_x [expr {int($cx / $cell_width)}]
-        set cell_y [expr {int($cy / $cell_height)}]
-
-        if {$cell_x != [lindex $current_box 1] || $cell_y != [lindex $current_box 0]} {
-            #close current movebox
-            incr current_path_no
-            set next_box [lindex $path $current_path_no]
-            set next_x [lindex $next_box 1]
-            set next_y [lindex $next_box 0]
-            set current_x [lindex $current_box 1]
-            set current_y [lindex $current_box 0]
-            set x1 [expr { $cell_width * $next_x}]
-            set x2 [expr { $cell_width * ($next_x + 1)}]
-            set y1 [expr { $cell_height * $next_y}]
-            set y2 [expr { $cell_height * ($next_y + 1)}]
-            set x_middle [expr { ($x2 + $x1) / 2 }]
-            set y_middle [expr { ($y2 + $y1) / 2 }]
-            if { [expr {$next_x - $current_x}] == 1} {
-                # coming from right, right to left
-                .game.c create line $x1 $y_middle $x2 $y_middle -width [expr {$line_width / 2}] -fill "red"
-            } elseif {[expr {$next_x - $current_x}] == -1} {
-                #coming from left
-                .game.c create line $x2 $y_middle $x1 $y_middle -width [expr {$line_width / 2}] -fill "red"
-            } elseif {[expr {$next_y - $current_y}] == 1} {
-                # coming from above
-                .game.c create line $x_middle $y1 $x_middle $y2 -width [expr {$line_width / 2}] -fill "red"
-            } elseif {[expr {$next_y - $current_y}] == -1} {
-                #coming from below
-                .game.c create line $x_middle $y2 $x_middle $y1 -width [expr {$line_width / 2}] -fill "red"
+        set segment_current [lindex $move_segments $current_movebox_index]
+        set x1 [lindex [lindex $segment_current 0] 0]
+        set y1 [lindex [lindex $segment_current 0] 1]
+        set x2 [lindex [lindex $segment_current 1] 0]
+        set y2 [lindex [lindex $segment_current 1] 1]
+        if { mb_state == paused } {
+            movebox 0 0 {0 $ob(slotticks) 1} [list {$x1,$y1,0.05,0.05}] [list {$x2,$y2,0.05,0.05}]
+            set ob(mb_state) active
+        }
+        .game.c create line $x1 $y1 $x2 $y2 -width [expr {$line_width / 4}] -fill "blue"
+        if { $x1 > $x2 } {
+            if { $cx <= $x2 + $line_width} {
+                incr current_movebox_index
+                stop_movebox 0
+                set ob(mb_state) paused
+            }
+        } elseif { $x1 < $x2 } {
+            if { $cx >= $x2 - $line_width } {
+                incr current_movebox_index
+            }
+        } elseif { $y1 > $y2 } {
+            if { $cy <= $y2 + $line_width } {
+                incr current_movebox_index
             } 
-        } else {
-            # check for turns
-
+        } elseif { $y1 < $y2 } {
+            if { $cy >= $y2 - $line_width} {
+                incr current_movebox_index
+            }
         }
     }
 
 
     proc check_pointer_position {} {
-        global pointer path level max_level_length mode increment cell_width cell_height
+        global pointer path level max_level_length mode increment cell_width cell_height segment_index move_segments line_width
+
         set coords [.game.c coords $pointer]
         set cx [expr {([lindex $coords 0] + [lindex $coords 2]) / 2}]
         set cy [expr {([lindex $coords 1] + [lindex $coords 3]) / 2}]
-        set final_cell [lindex $path [expr {$level * 2  - 1}]]
+        set final_cell [lindex $path [expr {$level * $increment - 1}]]
         set final_x [expr { int($cx / $cell_width)}]
         set final_y [expr { int($cy / $cell_height)}]
         # puts "$final_cell $final_x $final_y"
+        # puts $segment_index
+        set segment [lindex $move_segments [expr {$segment_index - 1}]]
+        # puts $segment
+        set end [lindex $segment 1]
+        set tolerance [expr {$line_width / 4}]
 
         if {$final_x == [lindex $final_cell 1] && $final_y == [lindex $final_cell 0]} {
+             # if {$cx == [lindex $end 0] && $cy == [lindex $end 1]} {
             if {$mode == "sequential"} {
                 incr level
             } else {
                 incr level $increment
-                puts $level
             }
-            if {$level * 2 > $max_level_length} {
+            if {$level * $increment > $max_level_length} {
                 puts "Congratulations! You've completed all levels."
                 exit
             }
-            after 500 [list draw_path $path [expr {$level * 2}]]
+            after 500 [list draw_path $path [expr {$level * $increment}]]
+            #  }
+        } else {
+            if { $segment_index < [llength $move_segments] } {
+                
+                if {[expr {abs($cx - [lindex $end 0]) <= $tolerance && abs($cy - [lindex $end 1]) <= $tolerance}]} {
+                    puts "$cx $cy"
+                    display_next_segment
+                }
+            }
         }
-    }
+}
 
-    # Function to initialize the pointer
-    proc create_pointer {a b} {
-        global pointer
+    proc create_pointer {x1 y1} {
+        global pointer segment_index
         if {[info exists pointer]} {
             .game.c delete $pointer
         }
-        set pointer [.game.c create oval $a $b [expr {$a + 20}] [expr {$b + 20}] -fill white]
+        set pointer [.game.c create oval $x1 $y1 [expr {$x1+20}] [expr {$y1+20}] -fill white]
         bind .game.c <B1-Motion> {move_pointer %x %y}
         focus -force .
     }
@@ -520,6 +541,7 @@ set path {
 set level 1
 set mode "sequential"
 set increment 1
+
 array set t_boundaries {}
 array set move_segments {}
 
@@ -527,6 +549,7 @@ set canvas_width 1800
 set canvas_height 1000
 set grid_width 9
 set grid_height 5
+set segment_index 0
 
 set cell_width [expr {$canvas_width / $grid_width}]
 set cell_height [expr {$canvas_height / $grid_height}]
